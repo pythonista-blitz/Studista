@@ -77,7 +77,7 @@ async def on_voice_state_update(member, before, after):
             leave_date = datetime.datetime.utcnow()
             voice_time = (leave_date - join_date).total_seconds() // 60
 
-            stay_minutes = round(latest_join[1]) + 2
+            stay_minutes = round(latest_join[1]) + 60
             # 1分以内の滞在なら通知しない
             if stay_minutes >= 1:
                 stay_minutes += voice_time
@@ -102,6 +102,10 @@ async def on_voice_state_update(member, before, after):
                 )
                 embed.add_field(
                     name="Total Time", value=calc_total_time(member.id), inline=True
+                )
+                embed.set_footer(
+                    text="made by nista",
+                    icon_url="attachment://icon.png",
                 )
                 await text_channel_name.send(embed=embed)
 
