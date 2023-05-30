@@ -45,7 +45,7 @@ def calc_total_time(user_id: int) -> str:
     delta = datetime.timedelta(minutes=total_minutes).seconds
     day, remainder = divmod(delta, 24 * 60 * 60)
     hour, remainder = divmod(delta, 60 * 60)
-    minutes, seconds = divmod(remainder, 60)
+    minutes, _seconds = divmod(remainder, 60)
 
     time_formatted = f"{day}日 {hour}時間 {minutes}分"
     return time_formatted
@@ -75,19 +75,16 @@ async def on_voice_state_update(member, before, after):
         if latest_join:
             join_date = datetime.datetime.strptime(latest_join[0], "%Y-%m-%d %H:%M:%S")
             leave_date = datetime.datetime.utcnow()
-            voice_time = (leave_date - join_date).total_seconds() // 60
+            stay_minutes = round((leave_date - join_date).total_seconds() // 60)
 
-            stay_minutes = round(latest_join[1]) + 60
+            cursor.execute(
+                "UPDATE study_time SET stay_minutes=? WHERE user_id=? AND join_date=?",
+                (stay_minutes, member.id, latest_join[0]),
+            )
+            conn.commit()
+
             # 1分以内の滞在なら通知しない
             if stay_minutes >= 1:
-                stay_minutes += voice_time
-
-                cursor.execute(
-                    "UPDATE study_time SET stay_minutes=? WHERE user_id=? AND join_date=?",
-                    (stay_minutes, member.id, latest_join[0]),
-                )
-                conn.commit()
-
                 # 通知用テキストチャンネルにメッセージを送信
                 text_channel_name = bot.get_channel(NOTIFY_CHANNEL_ID)
                 embed = discord.Embed(title="Result", color=discord.Color.green())
